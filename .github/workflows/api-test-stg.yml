@@ -183,7 +183,6 @@ jobs:
             -d chat_id="${CHAT_ID}" \
             -d parse_mode="MarkdownV2" \
             --data-urlencode text="${MESSAGE}" \
-            -o /dev/null
 
           echo "Telegram notification sent"
 
