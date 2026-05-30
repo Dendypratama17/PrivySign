@@ -116,7 +116,7 @@ jobs:
             api/bulk-save-contact-jest/jest-results.json
           retention-days: 7
 
-      # --- 8. Notifikasi Telegram ---
+# --- 8. Notifikasi Telegram ---
       - name: Send Telegram notification
         if: always()
         env:
@@ -133,59 +133,50 @@ jobs:
             BRANCH="${{ github.event.client_payload.branch }}"
             COMMIT="${{ github.event.client_payload.commit }}"
             ACTOR="${{ github.event.client_payload.triggered_by }}"
-            SOURCE="Auto (Dev push)"
+            SOURCE="Auto Dev push"
           else
             BRANCH="${{ github.ref_name }}"
             COMMIT="${{ github.sha }}"
             ACTOR="${{ github.actor }}"
             SOURCE="Manual trigger"
           fi
-
+ 
           SHORT_COMMIT="${COMMIT:0:7}"
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
+ 
           if [ "$JOB_STATUS" = "success" ]; then
+            STATUS_ICON="passed"
             STATUS_LABEL="PASSED"
           elif [ "$JOB_STATUS" = "failure" ]; then
+            STATUS_ICON="failed"
             STATUS_LABEL="FAILED"
           else
+            STATUS_ICON="warning"
             STATUS_LABEL="$JOB_STATUS"
           fi
-
-          escape_md() { printf '%s' "$1" | sed 's/[_*[\]()~`>#+\-=|{}.!]/\\&/g'; }
-
-          BRANCH_ESC=$(escape_md "$BRANCH")
-          ACTOR_ESC=$(escape_md "$ACTOR")
-          SOURCE_ESC=$(escape_md "$SOURCE")
-          RUN_URL_ESC=$(escape_md "$RUN_URL")
-
-          LINE1="*API Test STG - ${STATUS_LABEL}*"
-          LINE2="Branch  : \`${BRANCH_ESC}\`"
-          LINE3="Commit  : \`${SHORT_COMMIT}\`"
-          LINE4="Actor   : ${ACTOR_ESC}"
-          LINE5="Source  : ${SOURCE_ESC}"
-          LINE6=""
-          LINE7="*Test Results:*"
-          LINE8="Passed  : ${PASSED}"
-          LINE9="Failed  : ${FAILED}"
-          LINE10="Pending : ${PENDING}"
-          LINE11="Total   : ${TOTAL}"
-          LINE12="Duration: ${DURATION}s"
-          LINE13=""
-          LINE14="[Lihat detail run](${RUN_URL_ESC})"
-
-          MESSAGE=$(printf '%s\n' \
-            "$LINE1" "$LINE2" "$LINE3" "$LINE4" "$LINE5" \
-            "$LINE6" "$LINE7" "$LINE8" "$LINE9" "$LINE10" \
-            "$LINE11" "$LINE12" "$LINE13" "$LINE14")
-
+ 
+          MSG="<b>API Test STG - ${STATUS_LABEL}</b>"
+          MSG="${MSG}$(printf '\n')<b>Branch:</b> <code>${BRANCH}</code>"
+          MSG="${MSG}$(printf '\n')<b>Commit:</b> <code>${SHORT_COMMIT}</code>"
+          MSG="${MSG}$(printf '\n')<b>Actor:</b> ${ACTOR}"
+          MSG="${MSG}$(printf '\n')<b>Source:</b> ${SOURCE}"
+          MSG="${MSG}$(printf '\n')"
+          MSG="${MSG}$(printf '\n')<b>Test Results:</b>"
+          MSG="${MSG}$(printf '\n')Passed  : ${PASSED}"
+          MSG="${MSG}$(printf '\n')Failed  : ${FAILED}"
+          MSG="${MSG}$(printf '\n')Pending : ${PENDING}"
+          MSG="${MSG}$(printf '\n')Total   : ${TOTAL}"
+          MSG="${MSG}$(printf '\n')Duration: ${DURATION}s"
+          MSG="${MSG}$(printf '\n')"
+          MSG="${MSG}$(printf '\n')<a href=\"${RUN_URL}\">Lihat detail run</a>"
+ 
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d chat_id="${CHAT_ID}" \
-            -d parse_mode="MarkdownV2" \
-            --data-urlencode text="${MESSAGE}" \
-
+            -d parse_mode="HTML" \
+            --data-urlencode text="${MSG}"
+ 
           echo "Telegram notification sent"
-
+          
       # --- 9. Fail job jika ada test yang gagal ---
       - name: Fail if tests failed
         if: steps.jest.outcome == 'failure'
