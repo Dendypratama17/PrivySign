@@ -1,0 +1,31 @@
+appId: com.privygate.privyid.stg
+---
+# 🟠 Login dengan PrivyID salah
+
+- runFlow:
+    when:
+      visible:
+        id: "com.privygate.privyid.stg:id/btn_change"
+    commands:
+      - tapOn:
+          id: "com.privygate.privyid.stg:id/btn_change"
+
+- tapOn:
+    id: "et_identifier"
+
+- inputText: "MNHM242254"
+
+- runFlow:
+    when:
+      visible:
+        id: "btn_clear_all"
+    commands:
+      - tapOn:
+          id: "btn_clear_all"
+
+- tapOn:
+    id: "btn_login"
+
+- assertVisible:
+    text: "This PrivyID doesn't exist.|PrivyID ini tidak terdaftar."
+    optional: true

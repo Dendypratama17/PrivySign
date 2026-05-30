@@ -1,0 +1,7 @@
+appId: com.privygate.privyid.stg
+---
+    #"🟣 Login dengan password benar"
+      - tapOn: { id: "et_password" }
+      - eraseText: 50
+      - inputText: "Akuntes1!Akuntes1!"
+      - tapOn: { id: "btn_login" }

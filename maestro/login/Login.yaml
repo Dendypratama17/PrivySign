@@ -1,0 +1,100 @@
+# --- Running script : maestro test coba.yaml --format html --output report.html --debug-output ./test_results
+appId: com.privygate.privyid.stg
+---
+# Skip intro illustration kalau muncul
+- runFlow:
+    when:
+      visible:
+        id: "com.privygate.privyid.stg:id/iv_illustration"
+    commands:
+      - tapOn:
+          id: "com.privygate.privyid.stg:id/bt_skip"
+
+# Cek tombol Login & Register
+- assertVisible:
+    text: "Log in|Masuk"
+    optional: true
+- assertVisible:
+    text: "Register|Daftar"
+    optional: true
+# Tap tombol login kalau terlihat
+- runFlow:
+    when:
+      visible:
+        text: "Log in|Masuk"
+    commands:
+      - tapOn:
+          text: "Log in|Masuk"
+          
+- runFlow:
+    when:
+      visible:
+        id: "com.privygate.privyid.stg:id/btn_change"
+    commands:
+      - tapOn:
+          id: "com.privygate.privyid.stg:id/btn_change"
+- assertVisible: 
+    id: "tv_greeting_title"
+    optional: true
+- assertVisible: 
+    id: "tv_doesnt_have_account"
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "tv_forget_identifier"
+    commands:
+      - tapOn:
+          id: "tv_forget_identifier"
+      - swipe:
+          direction: DOWN
+- assertVisible: 
+    id: "et_identifier"
+- tapOn: 
+    id: "et_identifier"
+- tapOn: 
+    id: "et_identifier"
+- inputText: "YQYZ1346"
+- runFlow:
+    when:
+      visible:
+        id: "btn_clear_all"
+    commands:
+      - tapOn:
+          id: "btn_clear_all"
+- tapOn:
+    id: "btn_login"
+- assertVisible:
+    id: "et_password"
+    optional: true
+
+- tapOn:
+    id: "et_password"
+- inputText: "Akuntes1!Akuntes1!"
+- tapOn:
+    id: "btn_login"
+
+# Kita buat pengecekan logo satu per satu dengan label status
+- runFlow:
+    when:
+      visible:
+        id: "iv_campaign"
+    commands:
+      - tapOn:
+          id: "btn_close"
+- assertVisible:
+    id: "iv_logo"
+    index: 0
+    optional: true
+- assertVisible:
+    id: "iv_logo"
+    index: 1
+    optional: true
+- assertVisible:
+    id: "iv_logo"
+    index: 2
+    optional: true
+- assertVisible:
+    id: "iv_logo"
+    index: 3
+    optional: true

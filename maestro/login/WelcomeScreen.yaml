@@ -1,0 +1,28 @@
+appId: com.privygate.privyid.stg
+---
+# 🟢 Welcome Screen
+
+# Skip intro illustration kalau muncul
+- runFlow:
+    when:
+      visible:
+        id: "com.privygate.privyid.stg:id/iv_illustration"
+    commands:
+      - tapOn:
+          id: "com.privygate.privyid.stg:id/bt_skip"
+
+# Cek tombol Login & Register
+- assertVisible:
+    text: "Log in|Masuk"
+    optional: true
+- assertVisible:
+    text: "Register|Daftar"
+    optional: true
+# Tap tombol login kalau terlihat
+- runFlow:
+    when:
+      visible:
+        text: "Log in|Masuk"
+    commands:
+      - tapOn:
+          text: "Log in|Masuk"
