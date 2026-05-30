@@ -63,7 +63,6 @@ jobs:
         env:
           ENV: ${{ env.ENV }}
           BASE_URL: ${{ env.BASE_URL }}
-          BEARER_TOKEN: ${{ secrets.STG_BEARER_TOKEN }}
           AUTH_TYPE: bearer
         run: |
           TEST_PATH="${{ steps.resolve-path.outputs.test_path }}"
