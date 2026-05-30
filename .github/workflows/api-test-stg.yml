@@ -145,30 +145,33 @@ jobs:
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
  
           if [ "$JOB_STATUS" = "success" ]; then
-            STATUS_ICON="passed"
+            STATUS_EMOJI="✅"
             STATUS_LABEL="PASSED"
           elif [ "$JOB_STATUS" = "failure" ]; then
-            STATUS_ICON="failed"
+            STATUS_EMOJI="❌"
             STATUS_LABEL="FAILED"
           else
-            STATUS_ICON="warning"
+            STATUS_EMOJI="⚠️"
             STATUS_LABEL="$JOB_STATUS"
           fi
  
-          MSG="<b>API Test STG - ${STATUS_LABEL}</b>"
-          MSG="${MSG}$(printf '\n')<b>Branch:</b> <code>${BRANCH}</code>"
-          MSG="${MSG}$(printf '\n')<b>Commit:</b> <code>${SHORT_COMMIT}</code>"
-          MSG="${MSG}$(printf '\n')<b>Actor:</b> ${ACTOR}"
-          MSG="${MSG}$(printf '\n')<b>Source:</b> ${SOURCE}"
-          MSG="${MSG}$(printf '\n')"
-          MSG="${MSG}$(printf '\n')<b>Test Results:</b>"
-          MSG="${MSG}$(printf '\n')Passed  : ${PASSED}"
-          MSG="${MSG}$(printf '\n')Failed  : ${FAILED}"
-          MSG="${MSG}$(printf '\n')Pending : ${PENDING}"
-          MSG="${MSG}$(printf '\n')Total   : ${TOTAL}"
-          MSG="${MSG}$(printf '\n')Duration: ${DURATION}s"
-          MSG="${MSG}$(printf '\n')"
-          MSG="${MSG}$(printf '\n')<a href=\"${RUN_URL}\">Lihat detail run</a>"
+          NL=$'\n'
+ 
+          MSG="${STATUS_EMOJI} <b>API Test STG - ${STATUS_LABEL}</b>${NL}"
+          MSG="${MSG}${NL}"
+          MSG="${MSG}🔀 <b>Branch:</b> <code>${BRANCH}</code>${NL}"
+          MSG="${MSG}🔖 <b>Commit:</b> <code>${SHORT_COMMIT}</code>${NL}"
+          MSG="${MSG}👤 <b>Actor:</b> ${ACTOR}${NL}"
+          MSG="${MSG}🚀 <b>Source:</b> ${SOURCE}${NL}"
+          MSG="${MSG}${NL}"
+          MSG="${MSG}📊 <b>Test Results:</b>${NL}"
+          MSG="${MSG}✅ Passed  : ${PASSED}${NL}"
+          MSG="${MSG}❌ Failed  : ${FAILED}${NL}"
+          MSG="${MSG}⏳ Pending : ${PENDING}${NL}"
+          MSG="${MSG}📝 Total   : ${TOTAL}${NL}"
+          MSG="${MSG}⏱ Duration: ${DURATION}s${NL}"
+          MSG="${MSG}${NL}"
+          MSG="${MSG}🔗 <a href=\"${RUN_URL}\">Lihat detail run</a>"
  
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
             -d chat_id="${CHAT_ID}" \
