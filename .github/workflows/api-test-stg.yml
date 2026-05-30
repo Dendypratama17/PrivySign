@@ -19,8 +19,6 @@ on:
           - 'false'
 
 env:
-  ENV: stag
-  BASE_URL: https://stg-public-api.privy.id/privysign
   NODE_VERSION: '20'
 
 jobs:
@@ -65,9 +63,7 @@ jobs:
       - name: Run Jest API tests
         id: jest
         env:
-          ENV: ${{ env.ENV }}
-          BASE_URL: ${{ env.BASE_URL }}
-          AUTH_TYPE: bearer
+          ENV: stag
         run: |
           TEST_PATH="${{ steps.resolve-path.outputs.test_path }}"
           if [ -n "$TEST_PATH" ]; then
