@@ -28,6 +28,9 @@ jobs:
     name: Run Jest API Test - STG
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: api/bulk-save-contact-jest
 
     steps:
       # --- 1. Checkout repo QA ---
@@ -40,10 +43,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: api/bulk-save-contact-jest/package-lock.json
 
       # --- 3. Install dependencies ---
       - name: Install dependencies
-        working-directory: api/bulk-save-contact-jest
         run: npm ci
 
       # --- 4. Resolve test path filter ---
@@ -58,10 +61,9 @@ jobs:
           echo "test_path=${TEST_PATH}" >> $GITHUB_OUTPUT
           echo "Resolved test path: '${TEST_PATH}'"
 
-     # --- 5. Run Jest ---
+      # --- 5. Run Jest ---
       - name: Run Jest API tests
         id: jest
-        working-directory: api/bulk-save-contact-jest
         env:
           ENV: ${{ env.ENV }}
           BASE_URL: ${{ env.BASE_URL }}
@@ -89,7 +91,6 @@ jobs:
       - name: Parse test results
         id: parse
         if: always()
-        working-directory: api/bulk-save-contact-jest
         run: |
           if [ -f jest-results.json ]; then
             TOTAL=$(jq '.numTotalTests' jest-results.json)
@@ -105,6 +106,7 @@ jobs:
           echo "failed=$FAILED"     >> $GITHUB_OUTPUT
           echo "pending=$PENDING"   >> $GITHUB_OUTPUT
           echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "Total: $TOTAL | Passed: $PASSED | Failed: $FAILED | Pending: $PENDING"
 
       # --- 7. Upload artifact ---
       - name: Upload test report
@@ -116,3 +118,81 @@ jobs:
             api/bulk-save-contact-jest/junit.xml
             api/bulk-save-contact-jest/jest-results.json
           retention-days: 7
+
+      # --- 8. Notifikasi Telegram ---
+      - name: Send Telegram notification
+        if: always()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          JOB_STATUS: ${{ job.status }}
+          TOTAL: ${{ steps.parse.outputs.total }}
+          PASSED: ${{ steps.parse.outputs.passed }}
+          FAILED: ${{ steps.parse.outputs.failed }}
+          PENDING: ${{ steps.parse.outputs.pending }}
+          DURATION: ${{ steps.parse.outputs.duration }}
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            BRANCH="${{ github.event.client_payload.branch }}"
+            COMMIT="${{ github.event.client_payload.commit }}"
+            ACTOR="${{ github.event.client_payload.triggered_by }}"
+            SOURCE="Auto (Dev push)"
+          else
+            BRANCH="${{ github.ref_name }}"
+            COMMIT="${{ github.sha }}"
+            ACTOR="${{ github.actor }}"
+            SOURCE="Manual trigger"
+          fi
+
+          SHORT_COMMIT="${COMMIT:0:7}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "$JOB_STATUS" = "success" ]; then
+            STATUS_LABEL="PASSED"
+          elif [ "$JOB_STATUS" = "failure" ]; then
+            STATUS_LABEL="FAILED"
+          else
+            STATUS_LABEL="$JOB_STATUS"
+          fi
+
+          escape_md() { printf '%s' "$1" | sed 's/[_*[\]()~`>#+\-=|{}.!]/\\&/g'; }
+
+          BRANCH_ESC=$(escape_md "$BRANCH")
+          ACTOR_ESC=$(escape_md "$ACTOR")
+          SOURCE_ESC=$(escape_md "$SOURCE")
+          RUN_URL_ESC=$(escape_md "$RUN_URL")
+
+          LINE1="*API Test STG - ${STATUS_LABEL}*"
+          LINE2="Branch  : \`${BRANCH_ESC}\`"
+          LINE3="Commit  : \`${SHORT_COMMIT}\`"
+          LINE4="Actor   : ${ACTOR_ESC}"
+          LINE5="Source  : ${SOURCE_ESC}"
+          LINE6=""
+          LINE7="*Test Results:*"
+          LINE8="Passed  : ${PASSED}"
+          LINE9="Failed  : ${FAILED}"
+          LINE10="Pending : ${PENDING}"
+          LINE11="Total   : ${TOTAL}"
+          LINE12="Duration: ${DURATION}s"
+          LINE13=""
+          LINE14="[Lihat detail run](${RUN_URL_ESC})"
+
+          MESSAGE=$(printf '%s\n' \
+            "$LINE1" "$LINE2" "$LINE3" "$LINE4" "$LINE5" \
+            "$LINE6" "$LINE7" "$LINE8" "$LINE9" "$LINE10" \
+            "$LINE11" "$LINE12" "$LINE13" "$LINE14")
+
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
+            -d parse_mode="MarkdownV2" \
+            --data-urlencode text="${MESSAGE}" \
+            -o /dev/null
+
+          echo "Telegram notification sent"
+
+      # --- 9. Fail job jika ada test yang gagal ---
+      - name: Fail if tests failed
+        if: steps.jest.outcome == 'failure'
+        run: |
+          echo "Ada test yang gagal. Lihat laporan di artifact."
+          exit 1
